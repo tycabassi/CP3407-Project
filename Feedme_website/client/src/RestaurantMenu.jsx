@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./App.css";
 
 export default function RestaurantMenu() {
-
   const { id } = useParams();
 
-  const [restaurant,setRestaurant] = useState(null);
-  const [menu,setMenu] = useState([]);
-  const [loading,setLoading] = useState(true);
+  const [restaurant, setRestaurant] = useState(null);
+  const [menu, setMenu] = useState([]);
+  const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     const load = async () => {
-
       const r = await fetch(`/api/restaurants/${id}`);
       const restaurantData = await r.json();
 
@@ -26,60 +24,137 @@ export default function RestaurantMenu() {
     };
 
     load();
+  }, [id]);
 
-  },[id]);
+  function addToCart(item) {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
 
-  if(loading) return <div className="lm-empty">Loading...</div>;
+      if (existingItem) {
+        return prevCart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        );
+      }
+
+      return [
+        ...prevCart,
+        {
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          quantity: 1,
+        },
+      ];
+    });
+  }
+
+  function decreaseQuantity(itemId) {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) =>
+          item.id === itemId
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  }
+
+  const subtotal = useMemo(() => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const totalItems = useMemo(() => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  }, [cart]);
+
+  if (loading) return <div className="lm-empty">Loading...</div>;
 
   return (
-
     <div className="lm-shell">
-
       <header className="lm-topbar">
         <Link to="/" className="lm-brandLink">FeedMe</Link>
       </header>
 
       <main className="lm-main">
-
         <div className="lm-restaurantHeader">
           <h1>{restaurant.name}</h1>
           <p>{restaurant.category}</p>
         </div>
 
-        <div className="lm-menuGrid">
+        <div className="lm-contentWrap">
+          <div className="lm-menuGrid">
+            {menu.map((item) => (
+              <div className="lm-menuCard" key={item.id}>
+                <div className="lm-menuTitle">
+                  {item.name}
+                </div>
 
-          {menu.map(item => (
+                <div className="lm-menuDesc">
+                  {item.description}
+                </div>
 
-            <div className="lm-menuCard" key={item.id}>
+                <div className="lm-menuBottom">
+                  <span className="lm-menuPrice">
+                    ${Number(item.price).toFixed(2)}
+                  </span>
 
-              <div className="lm-menuTitle">
-                {item.name}
+                  <button
+                    className="lm-addBtn"
+                    onClick={() => addToCart(item)}
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
+            ))}
+          </div>
 
-              <div className="lm-menuDesc">
-                {item.description}
-              </div>
+          <aside className="lm-cart">
+            <h2>Your Cart</h2>
+            <p>{totalItems} item{totalItems !== 1 ? "s" : ""}</p>
 
-              <div className="lm-menuBottom">
+            {cart.length === 0 ? (
+              <p>Your cart is empty.</p>
+            ) : (
+              <>
+                <div className="lm-cartList">
+                  {cart.map((item) => (
+                    <div className="lm-cartItem" key={item.id}>
+                      <div>
+                        <strong>{item.name}</strong>
+                        <div>Qty: {item.quantity}</div>
+                      </div>
 
-                <span className="lm-menuPrice">
-                  ${Number(item.price).toFixed(2)}
-                </span>
+                      <div>
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </div>
 
-                <button className="lm-addBtn">
-                  Add
+                      <div className="lm-cartActions">
+                        <button onClick={() => addToCart(item)}>+</button>
+                        <button onClick={() => decreaseQuantity(item.id)}>-</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <hr />
+
+                <div className="lm-cartSummary">
+                  <strong>Subtotal:</strong>
+                  <strong>${subtotal.toFixed(2)}</strong>
+                </div>
+
+                <button className="lm-checkoutBtn">
+                  Checkout
                 </button>
-
-              </div>
-
-            </div>
-
-          ))}
-
+              </>
+            )}
+          </aside>
         </div>
-
       </main>
-
     </div>
   );
 }
