@@ -581,3 +581,61 @@
   border-radius:8px;
   cursor:pointer;
 }
+
+.lm-contentWrap {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.lm-menuGrid {
+  flex: 1;
+}
+
+.lm-cart {
+  width: 320px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 20px;
+}
+
+.lm-cartList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.lm-cartItem {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+}
+
+.lm-cartActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lm-cartActions button {
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.lm-cartSummary {
+  display: flex;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.lm-checkoutBtn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
