@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./App.css";
 
@@ -8,6 +8,8 @@ export default function RestaurantMenu() {
   const [restaurant, setRestaurant] = useState(null);
   const [menu, setMenu] = useState([]);
   const [cart, setCart] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,10 +23,20 @@ export default function RestaurantMenu() {
       setRestaurant(restaurantData);
       setMenu(menuData);
       setLoading(false);
-    };
-
+    }
     load();
   }, [id]);
+
+  useEffect(() => {
+  function handleClickOutside(e) {
+    if (cartRef.current && !cartRef.current.contains(e.target)) {
+      setCartOpen(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
   function addToCart(item) {
     setCart((prevCart) => {
@@ -75,9 +87,67 @@ export default function RestaurantMenu() {
   return (
     <div className="lm-shell">
       <header className="lm-topbar">
-        <Link to="/" className="lm-brandLink">FeedMe</Link>
-      </header>
+  <Link to="/" className="lm-brandLink">FeedMe</Link>
 
+  <div className="lm-navSpacer" />
+
+  <div className="lm-cartNav" ref={cartRef}>
+    <button
+      className="lm-cartNavBtn"
+      onClick={() => setCartOpen((prev) => !prev)}
+    >
+      Cart ({totalItems})
+    </button>
+
+    {cartOpen && (
+      <div className="lm-cartDropdown">
+        <h2>Your Cart</h2>
+        <p>{totalItems} item{totalItems !== 1 ? "s" : ""}</p>
+
+        {cart.length === 0 ? (
+          <p>Your cart is empty.</p>
+        ) : (
+          <>
+            <div className="lm-cartList">
+              {cart.map((item) => (
+                <div className="lm-cartItem" key={item.id}>
+                  <div>
+                    <strong>{item.name}</strong>
+                    <div>Qty: {item.quantity}</div>
+                  </div>
+
+                  <div>${(item.price * item.quantity).toFixed(2)}</div>
+
+                  <div className="lm-cartActions">
+                    <button onClick={() => addToCart(item)}>+</button>
+                    <button onClick={() => decreaseQuantity(item.id)}>-</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <hr />
+
+            <div className="lm-cartSummary">
+              <strong>Subtotal:</strong>
+              <strong>${subtotal.toFixed(2)}</strong>
+            </div>
+
+            <button className="lm-checkoutBtn"
+              onClick={() => {
+                setCart([]);
+                setCartOpen(false);
+                alert("Order placed!");
+              }}>Checkout
+            </button>
+          </>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div className="lm-user">Fred Smith</div>
+</header>
       <main className="lm-main">
         <div className="lm-restaurantHeader">
           <h1>{restaurant.name}</h1>
@@ -111,48 +181,6 @@ export default function RestaurantMenu() {
               </div>
             ))}
           </div>
-
-          <aside className="lm-cart">
-            <h2>Your Cart</h2>
-            <p>{totalItems} item{totalItems !== 1 ? "s" : ""}</p>
-
-            {cart.length === 0 ? (
-              <p>Your cart is empty.</p>
-            ) : (
-              <>
-                <div className="lm-cartList">
-                  {cart.map((item) => (
-                    <div className="lm-cartItem" key={item.id}>
-                      <div>
-                        <strong>{item.name}</strong>
-                        <div>Qty: {item.quantity}</div>
-                      </div>
-
-                      <div>
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
-
-                      <div className="lm-cartActions">
-                        <button onClick={() => addToCart(item)}>+</button>
-                        <button onClick={() => decreaseQuantity(item.id)}>-</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <hr />
-
-                <div className="lm-cartSummary">
-                  <strong>Subtotal:</strong>
-                  <strong>${subtotal.toFixed(2)}</strong>
-                </div>
-
-                <button className="lm-checkoutBtn">
-                  Checkout
-                </button>
-              </>
-            )}
-          </aside>
         </div>
       </main>
     </div>
